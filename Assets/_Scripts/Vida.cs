@@ -1,20 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Vida : MonoBehaviour {
 
 	public static int Valor = 3; // Variavel Estatica/Global que Guardara a Vida da Nave;
+	Text vidaAtual;
+
+	private void Start() {
+		vidaAtual = GetComponent<Text>();
+	}
 	
 	void Update () {
 
-		Debug.Log (Valor);
 		// Atualiza o Valor da Vida na tela
-		//guiText.text = "Vida : " + Valor.ToString ();
+		vidaAtual.text = "Vida : " + Valor.ToString();
 
 		// Verifica se a vida do jogador acabou e ppausa o jogo
 		if (Valor <= 0) {
 			Valor = 0;
+			
 			// pausa o jogo
 			Time.timeScale = 0;
 		}
