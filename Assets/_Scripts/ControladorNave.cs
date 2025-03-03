@@ -1,37 +1,55 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class ControladorNave : Comportamentos {
+/// <summary>
+/// Controlador da nave do jogador. Responsável por capturar entradas, movimentar a nave e gerenciar tiros.
+/// </summary>
+public class ControladorNave : Comportamentos
+{
 
-	public GameObject tiro, explosao; // Variaveis/Ponteiros para objetos do jogo 
+    // Prefabs para tiro e explosão (associados no Inspector do Unity)
+    public GameObject tiro, explosao;
 
-	void Update () {
+    private void Start()
+    {
+        
+    }
 
-		// A variavel de direçao sera informada pelo Inputs "Horizontal" em X e "Vertical" em Y;
-		direcao = new Vector2 (Input.GetAxisRaw ("Horizontal"),
-		                       Input.GetAxisRaw ("Vertical"));
+    /// <summary>
+    /// Método chamado a cada frame. Gerencia a movimentação e disparo do jogador.
+    /// </summary>
+    void Update()
+    {
+        // Captura a entrada do jogador no teclado (setas ou WASD)
+        direcao = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-		// A varivel posicao recebera o valor calculado da funçao Mover
-		posicao = Mover (transform.position);
+        // Calcula a nova posição com base na direção e velocidade
+        Vector2 novaPosicao = Mover(transform.position);
 
-		// O objeto/nave recebera a posiçao ja limitada na tela de acordo com a funçao LimitarTela
-		transform.position = LimitarTela (posicao);
-		
-		// Se pressionar o botao "Fire1", pre configurado no Unity como Crtl e Clique esquerdo do Mouse
-		if (Input.GetButtonDown ("Fire1"))
-			// Instanciando o tiro na posicao da Nave e sem rotaçao
-			Instantiate (tiro, posicao,Quaternion.identity);
-	}
+        // Mantém a nave dentro dos limites da tela
+        transform.position = LimitarTela(novaPosicao);
 
-	// Verifica se algum objeto colidiu e guarda a informaçao dele na variavel colidiu
-	void OnTriggerEnter2D(Collider2D colidiu) {
-		// Verifica se a colisao foi com o objeto com a Tag "Inimigo";
-		if (colidiu.CompareTag ("Inimigo")) {
-			// Instanciando a explosao na posicao da Nave e sem rotaçao
-			Instantiate(explosao, posicao, Quaternion.identity);
-			// Subtrai um da Vida
-			Vida.Valor -= 1;
-		}
+        // Verifica se o jogador pressionou o botão de tiro (configurado no Unity como "Fire1")
+        if (Input.GetButtonDown("Fire1"))
+        {
+            // Cria um tiro na posição da nave, sem rotação
+            Instantiate(tiro, novaPosicao, Quaternion.identity);
+        }
+    }
 
-	}
+    /// <summary>
+    /// Detecta colisões com outros objetos no jogo.
+    /// </summary>
+    /// <param name="colidiu">O objeto com o qual houve colisão.</param>
+    void OnTriggerEnter2D(Collider2D colidiu)
+    {
+        // Verifica se a colisão foi com um inimigo
+        if (colidiu.CompareTag("Inimigo"))
+        {
+            // Cria uma explosão na posição da nave
+            Instantiate(explosao, transform.position, Quaternion.identity);
+
+            // Reduz a vida do jogador
+            Vida.instancia.PerderVida();
+        }
+    }
 }
