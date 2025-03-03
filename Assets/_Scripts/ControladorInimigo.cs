@@ -1,57 +1,94 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ControladorInimigo : Comportamentos {
+/// <summary>
+/// Controlador de inimigos. Gerencia movimentação, tiros e colisões dos inimigos no jogo.
+/// </summary>
+public class ControladorInimigo : Comportamentos
+{
 
-	public GameObject tiro, explosao; // Variaveis/Ponteiros para objetos do jogo 
-	public float tempoTiro; // tempo entre os tiros do inimigo
+    // Prefabs para tiro e explosão (configurados no Inspector do Unity)
+    public GameObject tiro, explosao;
 
-	void Start()
-	{
-		StartCoroutine("Tiro"); // Inicia a Coroutine de tiros do inimigo
-	}
-	
-	void Update () {
-		// Recebe a posicao do objeto/inimigo;
-		posicao = transform.position;
+    // Tempo entre os tiros do inimigo
+    public float tempoTiro = 2f;
 
-		// Verifica se o objeto esta colidindo com as laterais da tela e inverte seu movimento
-		if (posicao.x < LimiteTelaMin ().x)
-			direcao.x = 1;
-		else if (posicao.x > LimiteTelaMax ().x)
-			direcao.x = -1;
+    /// <summary>
+    /// Método chamado ao iniciar o inimigo. Inicia a rotina de disparos automáticos.
+    /// </summary>
+    void Start()
+    {
+        StartCoroutine(Tiro());
+    }
 
-		// Verifica se o objeto/inimigo saiu da tela pela parte inferior e move ela para cima
-		if (posicao.y < LimiteTelaMin ().y)
-			posicao = ResetarPosicao ();
+    /// <summary>
+    /// Método chamado a cada frame. Gerencia o movimento do inimigo e reposicionamento caso saia da tela.
+    /// </summary>
+    void Update()
+    {
+        // Obtém a posição atual do inimigo
+        Vector2 posicao = transform.position;
 
-		// Informa a posiçao para o objeto rodando a funçao Mover
-		transform.position = Mover (posicao);
+        // Verifica se o inimigo atingiu as bordas laterais da tela e inverte a direção
+        if (posicao.x <= LimiteTelaMin().x)
+        {
+            direcao.x = 1;
+        }
+        else if (posicao.x >= LimiteTelaMax().x)
+        {
+            direcao.x = -1;
+        }
 
-	}
+        // Verifica se o inimigo saiu da tela pela parte inferior e o reposiciona no topo
+        if (posicao.y <= LimiteTelaMin().y)
+        {
+            posicao = ResetarPosicao();
+        }
 
-	IEnumerator Tiro()
-	{
-		// Instanciando o tiro na posicao do inimigo e sem rotaçao
-		Instantiate(tiro, posicao, Quaternion.identity);
-		// Aguardo pelo tempo em segundos informado na variavel tempoTiro antes de executar a proxima linha
-		yield return new WaitForSeconds(tempoTiro);
-		// Inicia novamente a Coroutine de tiros do inimigo
-		StartCoroutine("Tiro");
-	}
+        // Move o inimigo com base na direção e velocidade
+        transform.position = Mover(posicao);
+    }
 
-	// Verifica se algum objeto colidiu e guarda a informaçao dele na variavel colidiu
-	void OnTriggerEnter2D(Collider2D colidiu) {
-		// Verifica se a colisao foi com o objeto com a Tag "TiroPlayer";
-		if (colidiu.CompareTag ("TiroPlayer")) {
-			// Instanciando a explosao na posicao do inimigo e sem rotaçao
-			Instantiate(explosao, posicao, Quaternion.identity);
-			// Retorna ma posiçao do inimigo acima da tela e um valor de X randomico dentro do tamanho da tela
-			transform.position = ResetarPosicao ();
-			// Destroi o tiro que colidiu com o inimigo
-			Destroy(colidiu.gameObject);
-			// Soma 10 pontos para o jogador
-			Pontos.Valor += 10;
-		}
-	}
+    /// <summary>
+    /// Rotina que faz o inimigo disparar tiros em intervalos regulares.
+    /// </summary>
+    IEnumerator Tiro()
+    {
+        // O loop while (true) cria um loop infinito dentro da Coroutine.
+        // Isso significa que o inimigo continuará atirando enquanto o objeto existir.
+        // A execução da Coroutine será pausada a cada "WaitForSeconds(tempoTiro)",
+        // garantindo que os tiros sejam disparados em intervalos regulares.
+        while (true)
+        {
+            // Instancia um tiro na posição atual do inimigo
+            Instantiate(tiro, transform.position, Quaternion.identity);
+
+            // Aguarda o tempo definido antes de disparar novamente
+            yield return new WaitForSeconds(tempoTiro);
+        }
+    }
+
+    /// <summary>
+    /// Detecta colisões com outros objetos no jogo.
+    /// </summary>
+    /// <param name="colidiu">O objeto com o qual houve colisão.</param>
+    void OnTriggerEnter2D(Collider2D ComQuemcColidiu)
+    {
+        // Verifica se a colisão foi com um tiro do jogador
+        if (ComQuemcColidiu.CompareTag("TiroPlayer"))
+        {
+            // Cria uma explosão na posição do inimigo
+            Instantiate(explosao, transform.position, Quaternion.identity);
+
+            // Move o inimigo para uma nova posição no topo da tela
+            transform.position = ResetarPosicao();
+
+            // Destroi o tiro do jogador
+            Destroy(ComQuemcColidiu.gameObject);
+
+            // Adiciona 10 pontos ao jogador
+            Pontos.instancia.AdicionarPontos(10);
+
+        }
+    }
 }

@@ -1,36 +1,140 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
+using System.Collections;
+using TMPro;
 
-public class Vida : MonoBehaviour {
+/// <summary>
+/// Gerencia o sistema de vida do jogador, exibindo o valor na interface e reiniciando o jogo quando necessário.
+/// </summary>
+public class Vida : MonoBehaviour
+{
 
-	public static int Valor = 3; // Variavel Estatica/Global que Guardara a Vida da Nave;
-	Text vidaAtual;
+    // Vida atual do jogador (variável global)
+    public static int Valor = 3;
 
-	private void Start() {
-		vidaAtual = GetComponent<Text>();
-	}
-	
-	void Update () {
+    // Referência ao componente de texto da UI
+    private TMP_Text vidaAtual;
 
-		// Atualiza o Valor da Vida na tela
-		vidaAtual.text = "Vida : " + Valor.ToString();
+    // Referência ao texto da mensagem de Game Over
+    public TextMeshProUGUI mensagemGameOver; 
 
-		// Verifica se a vida do jogador acabou e ppausa o jogo
-		if (Valor <= 0) {
-			Valor = 0;
-			
-			// pausa o jogo
-			Time.timeScale = 0;
-		}
+    // Instância do próprio script para facilitar o acesso global
+    public static Vida instancia;
 
-		// Quando o jogo estiver pausado e o jogador apertar qualquer tecla reinicia o jogo e os valores das variaveis
-		if (Time.timeScale == 0 && Input.anyKeyDown) {
-			Valor = 3;
-			Pontos.Valor = 0;
-			Time.timeScale = 1;
-			SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-		}
-	}
+    // Referência ao controlador da nave para desativar os controles ao pausar o jogo
+    private ControladorNave controladorNave;
+
+    /// <summary>
+    /// Configura a instância única e obtém a referência ao componente de texto da UI.
+    /// </summary>
+    private void Awake()
+    {
+        // Garante que só existe uma instância do script
+        if (instancia == null)
+        {
+            instancia = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        // Obtém a referência ao componente de texto da UI
+        vidaAtual = GetComponent<TMP_Text>();
+
+        // Busca automaticamente o script do jogador (ControladorNave)
+        controladorNave = FindFirstObjectByType<ControladorNave>();
+
+        // Certifica-se de que a mensagem de Game Over esteja oculta no início
+        if (mensagemGameOver != null)
+        {
+            mensagemGameOver.gameObject.SetActive(false);
+        }
+    }
+
+    private void Start()
+    {
+        AtualizarUI();
+    }
+
+    /// <summary>
+    /// Reduz a vida do jogador e verifica se o jogo deve ser encerrado.
+    /// </summary>
+    public void PerderVida()
+    {
+        Valor--;
+
+        // Atualiza a UI da vida
+        AtualizarUI();
+
+        // Verifica se a vida chegou a zero
+        if (Valor <= 0)
+        {
+            GameOver();
+        }
+    }
+
+    /// <summary>
+    /// Atualiza o texto da interface com o valor atual da vida.
+    /// </summary>
+    private void AtualizarUI()
+    {
+        vidaAtual.text = $"Vida: {Valor}";
+    }
+
+    /// <summary>
+    /// Executa ações de fim de jogo caso a vida acabe.
+    /// </summary>
+    private void GameOver()
+    {
+        Valor = 0;
+        Time.timeScale = 0; // Pausa o jogo
+
+        // Desativa o controle do jogador para impedir movimentação e tiros
+        if (controladorNave != null)
+        {
+            controladorNave.enabled = false;
+        }
+
+        // Ativa a mensagem de Game Over
+        if (mensagemGameOver != null)
+        {
+            mensagemGameOver.gameObject.SetActive(true);
+        }
+
+        // Aguarda entrada do jogador para reiniciar
+        StartCoroutine(AguardarReinicio());
+    }
+
+    /// <summary>
+    /// Aguarda o jogador pressionar uma tecla para reiniciar o jogo.
+    /// </summary>
+    private IEnumerator AguardarReinicio()
+    {
+        while (!Input.GetKey(KeyCode.Return))
+        {
+            yield return null;
+        }
+
+        ReiniciarJogo();
+    }
+
+    /// <summary>
+    /// Reinicia o jogo, restaurando os valores iniciais e recarregando a cena.
+    /// </summary>
+    private void ReiniciarJogo()
+    {
+        Valor = 3;
+        Pontos.instancia.ResetarPontos();
+        Time.timeScale = 1;
+
+        // Reativa o controle do jogador ao reiniciar o jogo
+        if (controladorNave != null)
+        {
+            controladorNave.enabled = true;
+        }
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 }
