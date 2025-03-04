@@ -67,7 +67,7 @@ Antes de iniciar, você precisará ter instalado:
 
 ### **1️⃣ Clonar o repositório**
 ```bash
-git clone https://github.com/seu-usuario/space-shooter-unity6.git
+git clone https://github.com/JogosIFPRTB/JogoNave2D.git
 ```
 
 ---
